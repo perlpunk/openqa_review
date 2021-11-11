@@ -29,6 +29,23 @@ class CacheNotFoundError(DownloadError):
 
     pass
 
+class BugzillaError(Exception):
+    """Bugzilla API returned error."""
+
+    def __init__(self, url, code, msg):
+        self.url = url
+        self.code = code
+        self.message = msg
+
+    def __str__(self):
+        """Return as markdown list item."""
+        return "Error retrieving '%s': code=%s msg='%s'" % (self.url, self.code, self.message)
+
+class BugNotFoundError(BugzillaError):
+    """A bugref points to a non-existing bug URL."""
+
+    pass
+
 
 def url_to_filename(url):
     """
@@ -114,7 +131,6 @@ class Browser(object):
         http = requests.Session()
         parsed_url = urlparse(url)
         http.mount("{}://".format(parsed_url.scheme), HTTPAdapter(max_retries=retries))
-        print("URL: " + url + "\n")
 
         try:
             r = http.get(url, auth=self.auth, timeout=30, headers=self.headers)
@@ -149,7 +165,6 @@ class Browser(object):
             msg = "Request to {} was not successful: {}".format(url, str(e))
             log.warn(msg)
             raise DownloadError(msg)
-        print("Status Code: " + str(r.status_code) + "\n")
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
@@ -172,7 +187,14 @@ class Browser(object):
         absolute_url = url if not url.startswith("/") else urljoin("http://dummy/", str(url))
         get_params = SortedDict({"method": method, "params": json.dumps([params])})
         get_url = requests.Request("GET", absolute_url, params=get_params).prepare().url
-        return self.get_json(get_url.replace("http://dummy", ""), cache)
+        response = self.get_json(get_url.replace("http://dummy", ""), cache)
+        if "error" in response and response["error"] is not None:
+            error = response["error"]
+            if error["code"] == 101:
+                raise BugNotFoundError(get_url, error["code"], error["message"])
+            else:
+                raise BugzillaError(get_url, error["code"], error["message"])
+        return response
 
     def json_rpc_post(self, url, method, params):
         """Execute JSON RPC POST request.
