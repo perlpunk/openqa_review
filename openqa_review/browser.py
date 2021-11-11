@@ -148,6 +148,7 @@ class Browser(object):
             msg = "Request to {} was not successful: {}".format(url, str(e))
             log.warn(msg)
             raise DownloadError(msg)
+        print("Status Code: " + r.status_code)
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
