@@ -731,7 +731,9 @@ class Issue(object):
         """Initialize data for bugzilla issues."""
         log.debug("Product bug discovered, looking on bugzilla")
         self.issue_type = "bugzilla"
-        self.json = bugzilla_browser.json_rpc_get("/jsonrpc.cgi", "Bug.get", {"ids": [self.bugid]})["result"]["bugs"][0]
+        response = bugzilla_browser.json_rpc_get("/jsonrpc.cgi", "Bug.get", {"ids": [self.bugid]})
+        print(response)
+        self.json = response["result"]["bugs"][0]
         self.status = self.json["status"]
         if self.json.get("resolution"):
             self.resolution = self.json["resolution"]
