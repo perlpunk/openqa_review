@@ -114,6 +114,7 @@ class Browser(object):
         http = requests.Session()
         parsed_url = urlparse(url)
         http.mount("{}://".format(parsed_url.scheme), HTTPAdapter(max_retries=retries))
+        print("URL: " + url + "\n")
 
         try:
             r = http.get(url, auth=self.auth, timeout=30, headers=self.headers)
@@ -148,7 +149,7 @@ class Browser(object):
             msg = "Request to {} was not successful: {}".format(url, str(e))
             log.warn(msg)
             raise DownloadError(msg)
-        print("Status Code: " + str(r.status_code))
+        print("Status Code: " + str(r.status_code) + "\n")
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
