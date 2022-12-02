@@ -68,7 +68,7 @@ jobs:
         path: coverage_html/
       if: ${{ always() && matrix.test-type == 'cov' }}
 
-  '3.6':
+  'py36':
     runs-on: ubuntu-20.04
 
     steps:
